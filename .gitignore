@@ -1,0 +1,7 @@
+*.o
+*.d
+Debug/collectionOfCode
+Debug/src/*
+Release/collectionOfCode
+Release/src/*
+
