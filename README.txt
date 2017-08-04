@@ -18,3 +18,6 @@ dl -dynamic library loader
 GLEW - openGL version check
 Xinerama - multidisplay thing
 Xcursor - locate and load cursor
+
+libsoil (SOIL) imageloading
+libassimp (assimp) 3D model loading
