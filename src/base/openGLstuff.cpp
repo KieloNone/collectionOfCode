@@ -20,6 +20,8 @@ using namespace cimg_library;
 #include <assimp/cimport.h>
 #include <typeinfo>
 
+using namespace std;
+
 /*
 void openGLexample::setup(){
 
@@ -130,7 +132,7 @@ void openGLexample::draw(){
 //}
 
 //this could be done easier with SOIL, but just to know how it is done
-GLuint configure_texture2D(std::string filename, myimagetype type){
+GLuint configure_texture2D(string filename, myimagetype type){
 
 	//getting image data from ofImage
 
@@ -161,7 +163,7 @@ GLuint configure_texture2D(std::string filename, myimagetype type){
 
 }
 
-void update_texture2D(GLuint textureID, std::string filename, myimagetype type){
+void update_texture2D(GLuint textureID, string filename, myimagetype type){
     glBindTexture(GL_TEXTURE_2D, textureID);
 	CImg<unsigned char> image(filename.c_str());
 	unsigned char * data=image;
@@ -175,7 +177,7 @@ void update_texture2D(GLuint textureID, std::string filename, myimagetype type){
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-GLuint configure_cubeMap(std::vector<const GLchar*> & faces, myimagetype type){
+GLuint configure_cubeMap(vector<const GLchar*> & faces, myimagetype type){
 
 	//tutorial for this: https://learnopengl.com/?_escaped_fragment_=Advanced-OpenGL/Cubemaps#!Advanced-OpenGL/Cubemaps
 	//this function is pretty similar to that of configure_texture2D with the exeption that we need to load 6 images (one for each face)
@@ -216,7 +218,7 @@ GLuint configure_cubeMap(std::vector<const GLchar*> & faces, myimagetype type){
 
 }
 
-void update_cubeMap(std::vector<const GLchar*> & faces,GLuint & textureID, myimagetype type){
+void update_cubeMap(vector<const GLchar*> & faces,GLuint & textureID, myimagetype type){
 
 	//tutorial for this: https://learnopengl.com/?_escaped_fragment_=Advanced-OpenGL/Cubemaps#!Advanced-OpenGL/Cubemaps
 	//this function is pretty similar to that of configure_texture2D with the exeption that we need to load 6 images (one for each face)
@@ -245,7 +247,7 @@ void update_cubeMap(std::vector<const GLchar*> & faces,GLuint & textureID, myima
 
 
 template <class T>
-GLuint configure_array(std::vector<T> & data){
+GLuint configure_array(vector<T> & data){
 	GLuint bufferID;
 	if((typeid(T)==typeid(vec3)) || (typeid(T)==typeid(vec2)) ){
 		//Generate 1 buffer, put the resulting identifier to bufferID
@@ -263,14 +265,14 @@ GLuint configure_array(std::vector<T> & data){
 		return bufferID;
 
 	}else{
-		std::cout << "Error in cofigure_array"<< std::endl; // TODO: error handling
+		cout << "Error in cofigure_array"<< std::endl; // TODO: error handling
 		return 0;
 	}
 
 
 }
 
-GLuint configure_indexarray(std::vector<int> & data){
+GLuint configure_indexarray(vector<int> & data){
 	GLuint indexBufferID;
 	glGenBuffers(1, &indexBufferID);
 	// note that we need GL_ELEMENT_ARRAY_BUFFER!
@@ -384,11 +386,11 @@ GLuint createAndCompileShader(const char * file_path, GLuint type){
 	GLuint ShaderID = glCreateShader(type);
 
 	// Read the shader code from the file
-	std::string ShaderCode;
-	std::ifstream ShaderStream(file_path, std::ios::in);
+	string ShaderCode;
+	ifstream ShaderStream(file_path, std::ios::in);
 	if(ShaderStream.is_open()){
-		std::string Line = "";
-		while(std::getline(ShaderStream, Line))
+		string Line = "";
+		while(getline(ShaderStream, Line))
 			ShaderCode += "\n" + Line;
 		ShaderStream.close();
 	}else{
@@ -411,12 +413,12 @@ GLuint createAndCompileShader(const char * file_path, GLuint type){
 	glGetShaderiv(ShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if ( InfoLogLength > 0 ){
 		if(type==GL_VERTEX_SHADER){
-			std::vector<char> VertexShaderErrorMessage(InfoLogLength+1);
+			vector<char> VertexShaderErrorMessage(InfoLogLength+1);
 			glGetShaderInfoLog(ShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
 			printf("%s\n", &VertexShaderErrorMessage[0]);
 		}
 		else{
-			std::vector<char> FragmentShaderErrorMessage(InfoLogLength+1);
+			vector<char> FragmentShaderErrorMessage(InfoLogLength+1);
 			glGetShaderInfoLog(ShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
 			printf("%s\n", &FragmentShaderErrorMessage[0]);
 		}
@@ -447,7 +449,7 @@ GLuint loadShaders(const char * vertex_file_path,const char * fragment_file_path
 	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
 	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if ( InfoLogLength > 0 ){
-		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
+		vector<char> ProgramErrorMessage(InfoLogLength+1);
 		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
 		printf("%s\n", &ProgramErrorMessage[0]);
 	}
