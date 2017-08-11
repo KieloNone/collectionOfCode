@@ -19,21 +19,22 @@ using namespace glm;
 
 class windowWrapper {
 	public:
-		windowWrapper(): width_(1024),height_(768) {init();}
-		windowWrapper(int width, int height):width_(width),height_(height){init(width,height);}
+		windowWrapper(){init();}
+		windowWrapper(int width, int height){init(width,height);}
 		~windowWrapper(){}
 		void run();
 		void update(){application_.update();}
 		void setup(){application_.setup();}
-		void glfw_window_size_callback(GLFWwindow* window, int width, int height);
-		void setWidth(int width){width_=width;}
-		void setHeight(int height){width_=height;}
+		void getKeyUpdates();
+		//void glfw_window_size_callback(GLFWwindow* window, int width, int height);
+		//void setWidth(int width){width_=width;}
+		//void setHeight(int height){width_=height;}
 	private:
-		int init(int width=1024,int height=768);
+		int init(int width=514,int height=514);
 		GLFWwindow* window_;
 		myApplication application_;
-		int width_;
-		int height_;
+		//int width_;
+		//int height_;
 
 
 };

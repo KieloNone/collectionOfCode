@@ -1,0 +1,281 @@
+#version 440
+layout(local_size_x = 1, local_size_y = 1) in;
+//using image2D instead of sampler, we can write anywhere in the image?
+layout(rgba32f, binding = 0) uniform image2D img_output; 
+//layout(rgba32f, binding = 1) uniform image2D img_input;
+//
+
+uniform sampler2D tex_input;
+
+uniform mat4 model[3];
+uniform mat4 model_inv[3];
+uniform int type[3];
+
+
+
+float intersectSphere(vec3 ray_o, vec3 ray_d){
+	vec3 omc = ray_o - vec3(0,0,0);
+	float b = dot(ray_d, omc);
+	float c = dot(omc, omc) - 1;
+	//float a = dot(ray_d,ray_d); //unnecessary if ray direction is normalized
+	float a=1; //change if needed
+	float bsqmc = b * b - c; //truly 4b²-4ac
+	if(bsqmc>0)
+	{
+		//return bsqmc;
+		float d = sqrt(bsqmc);
+		float t1=-b+d;
+		float t2=-b-d;
+		if(t2>0) 
+			return t2;
+		else 
+			return t1;
+	}
+	
+	else
+		return -1;  
+}
+
+float intersectSphere(vec3 ray_o, vec3 ray_d, vec3 sphere_c,float r){
+	vec3 omc = ray_o - sphere_c;
+	float b = dot(ray_d, omc);
+	float c = dot(omc, omc) - r*r;
+	//float a = dot(ray_d,ray_d); //unnecessary if ray direction is normalized
+	float a=1; //change if needed
+	float bsqmc = b * b - c; //truly 4b²-4ac
+	if(bsqmc>0)
+	{
+		//return bsqmc;
+		float d = sqrt(bsqmc);
+		float t1=-b+d;
+		float t2=-b-d;
+		if(t2>0) 
+			return t2;
+		else 
+			return t1;
+	}
+	
+	else
+		return -1;  
+}
+
+
+float intersectPlane(vec3 ray_o, vec3 ray_d, vec3 plane_n, float plane_D){
+  float nd=dot(plane_n,ray_d);
+  if(abs(nd)< 1e-20){ //TODO: machine precision
+	  //TODO: parallel
+	  return -1;
+  } else {
+	  float t=-(plane_D+dot(plane_n,ray_o))/nd;
+	  return t;
+  }
+	  
+  
+}
+
+float diffuse(vec3 dirL, vec3 normal)
+{
+    float color=max(0.0,dot(dirL,normal));
+    return color;
+}
+
+float specularBlinnPhong(vec3 dirL, vec3 dirV,vec3 vertNormal)
+{
+    vec3 halfw=normalize(dirL+dirV);
+    float color=pow(max(0.0,dot(halfw,vertNormal)),100.0);
+    return color;
+}
+
+
+float intersectShadow(vec3 ray_o,vec3 ray_d, vec3 plane_n, float plane_D){
+	float t=10000.0; //TODO: machine numbers...
+	float shadow=1;
+	
+	for (int j=0; j<3; j++){
+		vec3 ray_oj=(model_inv[j]*vec4(ray_o,1.0)).xyz;
+		vec3 ray_dj=(model_inv[j]*vec4(ray_d,0.0)).xyz;
+		if(type[j]==1){
+			float tS= intersectSphere(ray_oj, ray_dj);
+			if((tS>0) &&(tS<t)){
+				shadow=0.1;
+				break;
+				
+			}
+		}else{
+			float tP=intersectPlane( ray_o, ray_d, plane_n , plane_D);
+			if((tP>0) &&(tP<t)){
+				shadow=0;
+				break;
+			}
+			
+		}
+	}
+	return shadow;
+	
+}
+
+
+mat4 intersect(vec3 ray_o,vec3 ray_d, vec3 plane_n, float plane_D,int bounce)
+{
+	
+	vec3 light =vec3(0,1,-8);
+	vec4 color=vec4(0.0, 0.0, 0.0, 1.0);
+	mat4 outval=mat4(0);
+	
+	float t=intersectSphere(ray_o, ray_d, light,0.1);
+	
+	int ind=10;
+	if(t<0|| (bounce >0))
+	{
+		t=10000.0; //TODO: machine numbers...
+		ind=0;
+	}
+		
+		
+	
+	vec4 colorM=vec4(0,0,0,1);
+	for (int j=0; j<3; j++){
+		vec3 ray_oj=(model_inv[j]*vec4(ray_o,1.0)).xyz;
+		vec3 ray_dj=(model_inv[j]*vec4(ray_d,0.0)).xyz;
+		if(type[j]==1){
+			float tS= intersectSphere(ray_oj, ray_dj);
+			if((tS>0) &&(tS<t)){
+				t=tS;
+				ind=j;
+			}
+		}else{
+			float tP=intersectPlane( ray_o, ray_d, plane_n , plane_D);
+			if((tP>0) &&(tP<t)){
+				t=tP;
+				ind=j;
+			}
+				
+		}
+	}
+	
+	float kr=1;	
+	if((t>0) && (t<10000.0)){
+		
+		if(ind<10){
+			vec3 position = ray_o+t*ray_d;
+			vec3 dirL=normalize(light-position);
+			vec3 dirV=normalize(ray_o-position);
+			vec3 normal=vec3(0,1,0);
+			float kr=0;			
+			if(type[ind]==1){
+				normal=normalize(position-(model[ind]*vec4(0,0,0,1)).xyz);	
+			} else{
+				normal=plane_n;
+			}
+			if(ind==0){
+				colorM=vec4(1.0, 0.4, 0.4, 1.0);
+				kr=0.5;
+			}
+				
+			if(ind==1)
+			{
+				colorM=vec4(0.4, 0.4, 1.0, 1.0);
+				kr=0.5;
+			}
+			if(ind==2){
+				vec2 texCoords=vec2(position.x*0.15+0.15,position.z*0.1);
+				colorM=texture(tex_input,texCoords);
+				kr=0.5;
+				//colorM=vec4(0.4, 0.4, 1.0, 1.0);
+				//colorM=vec4(texCoords.x, texCoords.y, 0.0, 1.0);
+				
+			}
+				
+						
+					
+			float colori=diffuse(dirL, normal)+specularBlinnPhong(dirL, dirV,normal);
+			
+			//shadow
+			float shadow=intersectShadow(position+0.0001*dirL,dirL, plane_n, plane_D);
+					
+					
+			//---------------second bounce--------------------------------
+			color=shadow*vec4(vec3(colori),1)*colorM;	
+			vec3 ray_d2=normalize(ray_d-2*dot(ray_d,normal)*normal);
+			vec3 ray_o2=position+0.0001*ray_d2;
+					
+			
+			outval[1][0]=ray_d2[0];outval[1][1]=ray_d2[1];outval[1][2]=ray_d2[2];
+			outval[2][0]=ray_o2[0];outval[2][1]=ray_o2[1];outval[2][2]=ray_o2[2];
+			outval[3][1]=ind;
+		}else{
+			color=vec4(0.9);
+			t=10000.0;
+		}
+	} else
+		t=-1;
+	outval[0][0]=color[0];outval[0][1]=color[1];outval[0][2]=color[2];outval[0][3]=color[3];
+	outval[3][3]=t;
+	
+	//return color;+colorS
+	
+	return outval;
+}
+
+void main() {
+
+
+	// base pixel colour for image
+	vec4 pixel = vec4(0.2, 0.2, 0.2, 1.0);
+	// get index in global work group i.e x,y position
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+  
+	//----------------procjection + view + light (hardcoded for now)--------------------
+	float max_x = 5.0;
+	float max_y = 5.0;
+	ivec2 dims = imageSize(img_output); // fetch image dimensions
+	float x = (float(pixel_coords.x * 2 - dims.x) / dims.x); //--->[-1,1]
+	float y = (float(pixel_coords.y * 2 - dims.y) / dims.y); //--->[-1,1]
+  
+	vec3 pixel_position=vec3(x * max_x, y * max_y, -10.0);
+	vec3 ray_o=vec3(0.0,0.0,0.0);
+	vec3 ray_d=normalize(pixel_position-ray_o);
+  
+	//planeparameters, for now
+	vec3 plane_n=normalize(vec3(0,1,0));
+	float plane_D=1;
+  
+	//--------------- bounces----------------------------------------------------------
+
+	
+	
+	mat4 outval=intersect(ray_o,ray_d, plane_n, plane_D,0);
+	vec4 color1=pixel;//vec4(outval[0][0],outval[0][1],outval[0][2],outval[0][3]);
+	vec4 color2=vec4(0,0,0,1);
+	vec4 color3=vec4(0,0,0,1);
+	float t=outval[3][3];
+	
+	
+	if((t>0)){
+		color1=vec4(outval[0][0],outval[0][1],outval[0][2],outval[0][3]);
+		if((t<10000.0)){
+			vec3 ray_o2=vec3(outval[2][0],outval[2][1],outval[2][2]);
+			vec3 ray_d2=vec3(outval[1][0],outval[1][1],outval[1][2]);
+			mat4 outval2=intersect(ray_o2,ray_d2, plane_n, plane_D,1);
+			color2=vec4(outval2[0][0],outval2[0][1],outval2[0][2],outval2[0][3]);
+			float t2=outval2[3][3];
+			
+			if((t2>0) && (t2<10000.0)){
+				vec3 ray_o3=vec3(outval2[2][0],outval2[2][1],outval2[2][2]);
+				vec3 ray_d3=vec3(outval2[1][0],outval2[1][1],outval2[1][2]);
+				mat4 outval3=intersect(ray_o3,ray_d3, plane_n, plane_D,2);
+				color3=vec4(outval3[0][0],outval3[0][1],outval3[0][2],outval3[0][3]);
+			}
+		
+		}
+		
+	}
+	
+	pixel = vec4(color1[0],color1[1],color1[2],color1[3])+0.5*vec4(color2[0],color2[1],color2[2],color2[3])+0.5*0.5*vec4(color3[0],color3[1],color3[2],color3[3]);
+	
+	//pixel = vec4(normal,1);
+  
+	//vec2 texelCoords=vec2(gl_GlobalInvocationID.xy);
+	//pixel=texture(tex_input, vec2(x,y));
+	imageStore(img_output, pixel_coords, pixel);
+}

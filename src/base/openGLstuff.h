@@ -26,10 +26,11 @@ enum myimagetype {COL_R, COL_RG, COL_RGB, COL_RGBA};
 template <class T>
 GLuint configure_array(std::vector<T> & data);
 
+GLuint load_texture();
 GLuint configure_texture2D(std::string filename, myimagetype type);
 void update_texture2D(GLuint textureID, std::string filename, myimagetype type);
 
-
+GLuint createAndCompileShader(const char * file_path, GLuint type);
 GLuint loadShaders(const char * vertex_file_path,const char * fragment_file_path);
 void draw_texture(GLuint texture,GLuint textureID, GLuint type, GLuint position);
 GLuint configure_cubeMap(std::vector<const GLchar*> & faces, myimagetype type);

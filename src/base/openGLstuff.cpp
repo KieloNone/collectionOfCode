@@ -131,6 +131,9 @@ void openGLexample::draw(){
     */
 //}
 
+
+
+
 //this could be done easier with SOIL, but just to know how it is done
 GLuint configure_texture2D(string filename, myimagetype type){
 
@@ -155,6 +158,8 @@ GLuint configure_texture2D(string filename, myimagetype type){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //linear interpolation when zooming out
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //mipmaps when zooming in
     glGenerateMipmap(GL_TEXTURE_2D); //generating the mipmaps
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     //unbind GL_TEXTURE_2D
     glBindTexture(GL_TEXTURE_2D, 0);

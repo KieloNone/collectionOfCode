@@ -23,23 +23,36 @@ void glfw_error_callback(int error, const char* description) {
   gl_log_err("GLFW ERROR: code %i msg: %s\n", error, description);
 }
 
-//void glfw_window_size_callback(GLFWwindow* window, int width, int height) {
-//  wrapper.setWidth(width);
-//  wrapper.setWidth(height);
-//
-//  /* update any perspective matrices used here */
-//}
+int g_windowHeight; //extern
+int g_windowWidth;  //extern
 
+void glfw_window_size_callback(GLFWwindow* window, int width, int height) {
+	g_windowHeight=height;
+	g_windowWidth=width;
+  //width_=width;
+  //height_=height;
+
+  /* update any perspective matrices used here */
+}
+
+//extern int g_windowHeight;
+//extern int g_windowWidth;
+
+void windowWrapper::getKeyUpdates(){
+	application_.getKeyUpdates(window_);
+}
 
 int windowWrapper::init(int width,int height){
 
 	assert(restart_gl_log());
 
+	g_windowHeight=height;
+	g_windowWidth=width;
 
 	// start GL context and O/S window using the GLFW helper library
-	gl_log("starting GLFW\n%s\n", glfwGetVersionString());
-	glfwSetErrorCallback(glfw_error_callback);
-	//glfwSetWindowSizeCallback(window_,glfw_window_size_callback);
+	//gl_log("starting GLFW\n%s\n", glfwGetVersionString());
+	//glfwSetErrorCallback(glfw_error_callback);
+
 	//glfwSetKeyCallback(window, key_callback);
 
 	//jälkimmäinen parametri on oma funktio
@@ -63,6 +76,8 @@ int windowWrapper::init(int width,int height){
 	// GLFWmonitor* mon = glfwGetPrimaryMonitor();
 	//const GLFWvidmode* vmode = glfwGetVideoMode(mon);
 	window_ = glfwCreateWindow( width, height, "Window 01", NULL, NULL);
+	glfwSetWindowSizeCallback(window_,&glfw_window_size_callback);
+
 	//full screen
 	//window = glfwCreateWindow(vmode->width, vmode->height, "Extended GL Init", mon, NULL);
 	if( window_ == NULL ){
@@ -70,7 +85,7 @@ int windowWrapper::init(int width,int height){
 		glfwTerminate();
 		return -1;
 	}
-	glfwMakeContextCurrent(window_); // Initialize GLEW
+	glfwMakeContextCurrent(window_); // Initialize GLEWglViewport(0, 0, g_gl_width, g_gl_height);
 	glewExperimental=true; //will help in loading the latest openGL version
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
@@ -93,12 +108,14 @@ void windowWrapper::run(){
 	do{
 
 			//glViewport(0, 0, g_gl_width, g_gl_height); //jos skreenin koko muuttuu...
-
+		glViewport(0, 0, g_windowWidth, g_windowHeight);
 		_update_fps_counter(window_);
 		// wipe the drawing surface clear
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	    // Swap buffers	     */
+		getKeyUpdates();
 		update();
+
 	    glfwSwapBuffers(window_);
 	    glfwPollEvents();
 

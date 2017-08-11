@@ -9,7 +9,9 @@
 
 // Include GLM
 #include <glm/glm.hpp>
+#include<glm/gtx/transform.hpp>
 using namespace glm;
+
 
 #include "openGLstuff.h"
 
@@ -20,11 +22,17 @@ class myApplication {
 	public:
 		void setup();
 		void update();
+		void getKeyUpdates(GLFWwindow* window);
 
 	private:
 		GLuint vbo;
 		GLuint colours_vbo;
 		GLuint vao;
 		GLuint shaders;
+		GLuint tex_output;
+		GLuint comp_shader;
+		GLuint texID;
+		int tex_w; int tex_h;
+		float x,y,z;
 
 };

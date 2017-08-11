@@ -1,0 +1,138 @@
+#version 440
+layout(local_size_x = 1, local_size_y = 1) in;
+//using image2D instead of sampler, we can write anywhere in the image?
+layout(rgba32f, binding = 0) uniform image2D img_output; 
+//
+
+uniform mat4 model;
+uniform mat4 model_inv;
+
+float intersectSphere(vec3 ray_oi, vec3 ray_di, vec3 sphere_c, float sphere_r){
+	
+	vec3 ray_o=(model_inv*vec4(ray_oi,1.0)).xyz;
+	vec3 ray_d=(model_inv*vec4(ray_di,0.0)).xyz;
+	
+	vec3 omc = ray_o - sphere_c;
+	float b = dot(ray_d, omc);
+	float c = dot(omc, omc) - sphere_r * sphere_r;
+	//float a = dot(ray_d,ray_d); //unnecessary if ray direction is normalized
+	float a=1; //change if needed
+	float bsqmc = b * b - c; //truly 4b²-4ac
+	if(bsqmc>0)
+	{
+		//return bsqmc;
+		float d = sqrt(bsqmc);
+		float t1=-b+d;
+		float t2=-b-d;
+		if(t2>0) 
+			return t2;
+		else 
+			return t1;
+	}
+	
+	else
+		return -1;
+	
+		
+	
+	  
+}
+
+float intersectPlane(vec3 ray_o, vec3 ray_d, vec3 plane_n, float plane_D){
+  float nd=dot(plane_n,ray_d);
+  if(abs(nd)< 1e-20){ //TODO: machine precision
+	  //TODO: parallel
+	  return -1;
+  } else {
+	  float t=-(plane_D+dot(plane_n,ray_o))/nd;
+	  return t;
+  }
+	  
+  
+}
+
+float diffuse(vec3 dirL, vec3 normal)
+{
+    float color=max(0.0,dot(dirL,normal));
+    return color;
+}
+
+void main() {
+  // base pixel colour for image
+  vec4 pixel = vec4(0.0, 0.0, 0.0, 1.0);
+  // get index in global work group i.e x,y position
+  ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+  
+  //----------------the interesting stuff--------------------
+  float max_x = 6.5;
+  float max_y = 5.0;
+  ivec2 dims = imageSize(img_output); // fetch image dimensions
+  float x = (float(pixel_coords.x * 2 - dims.x) / dims.x); //--->[-1,1]
+  float y = (float(pixel_coords.y * 2 - dims.y) / dims.y); //--->[-1,1]
+  
+  //-------------players-------------------------------------------
+  /*
+  vec3 ray_o = vec3(x * max_x, y * max_y, 0.0);
+  vec3 ray_d = vec3(0.0, 0.0, -1.0); // ortho (ray pointing directly inside)
+  */
+  vec3 pixel_position=vec3(x * max_x, y * max_y, -10.0);
+  vec3 ray_o=vec3(0.0,0.0,0.0);
+  vec3 ray_d=normalize(pixel_position-ray_o);
+  vec3 light =vec3(5,5,-6);
+  
+  vec3 sphere_c = vec3(0.0, 0.0, 0.0);
+  float sphere_r = 1;
+  
+  vec3 plane_n=normalize(vec3(0,1,0));
+  float plane_D=1;
+
+  //intersection!!! //check out from the course home page
+ 
+  float tS=intersectSphere(ray_o, ray_d, sphere_c, sphere_r);
+  float tP=intersectPlane( ray_o, ray_d, plane_n , plane_D);
+  
+  if(tS<0.0){
+	  if(tP>0){
+		  vec3 position = ray_o+tP*ray_d;
+		  vec3 dirL=normalize(light-position);
+		  float shadow=intersectSphere(position, dirL, sphere_c, sphere_r);
+		  if(shadow>0)
+			  shadow=0;
+		  else
+			  shadow=1;
+		  	  
+		  float color=shadow*diffuse(dirL, plane_n);
+		  pixel = vec4(vec3(color),1)*vec4(0.4, 1.0, 0.4, 1.0);
+		  
+		  
+	  }
+  }else{
+	  if((tS<tP) || (tP <0.0)){
+		  vec3 position = ray_o+tS*ray_d;
+		  vec3 dirL=normalize(light-position);
+		  vec3 normal= normalize(position-(model*vec4(sphere_c,1)).xyz);
+		  float color=diffuse(dirL, normal);
+		  pixel = vec4(vec3(color)+vec3(0.2),1)*vec4(0.4, 0.4, 1.0, 1.0);
+		  
+	  } else {
+		  vec3 position = ray_o+tP*ray_d;
+		  vec3 dirL=normalize(light-position);
+		  float shadow=intersectSphere(position, dirL, sphere_c, sphere_r);
+		  if(shadow>0)
+			  shadow=0;
+		  else
+			  shadow=1;
+		  	  
+		  float color=shadow*diffuse(dirL, plane_n);
+		  pixel = vec4(vec3(color),1)*vec4(0.4, 1.0, 0.4, 1.0);  
+		  
+	  }
+  }
+  
+  //float temp=max(tS,tP);
+  //pixel=vec4(model[0][0],tP,0,1);
+  //pixel=vec4(abs(x),abs(y),0,1);
+  
+  // output to a specific pixel in the image
+  imageStore(img_output, pixel_coords, pixel);
+}
