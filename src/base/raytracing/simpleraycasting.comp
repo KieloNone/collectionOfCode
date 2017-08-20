@@ -7,9 +7,9 @@ layout(rgba32f, binding = 0) uniform image2D img_output;
 
 uniform sampler2D tex_input;
 
-uniform mat4 model[3];
-uniform mat4 model_inv[3];
-uniform int type[3];
+uniform mat4 model[4];
+uniform mat4 model_inv[4];
+uniform int type[4];
 
 
 
@@ -91,7 +91,7 @@ float intersectShadow(vec3 ray_o,vec3 ray_d, vec3 plane_n, float plane_D){
 	float t=10000.0; //TODO: machine numbers...
 	float shadow=1;
 	
-	for (int j=0; j<3; j++){
+	for (int j=0; j<4; j++){
 		vec3 ray_oj=(model_inv[j]*vec4(ray_o,1.0)).xyz;
 		vec3 ray_dj=(model_inv[j]*vec4(ray_d,0.0)).xyz;
 		if(type[j]==1){
@@ -134,7 +134,7 @@ mat4 intersect(vec3 ray_o,vec3 ray_d, vec3 plane_n, float plane_D,int bounce)
 		
 	
 	vec4 colorM=vec4(0,0,0,1);
-	for (int j=0; j<3; j++){
+	for (int j=0; j<4; j++){
 		vec3 ray_oj=(model_inv[j]*vec4(ray_o,1.0)).xyz;
 		vec3 ray_dj=(model_inv[j]*vec4(ray_d,0.0)).xyz;
 		if(type[j]==1){
@@ -153,7 +153,6 @@ mat4 intersect(vec3 ray_o,vec3 ray_d, vec3 plane_n, float plane_D,int bounce)
 		}
 	}
 	
-	float kr=1;	
 	if((t>0) && (t<10000.0)){
 		
 		if(ind<10){
@@ -169,18 +168,19 @@ mat4 intersect(vec3 ray_o,vec3 ray_d, vec3 plane_n, float plane_D,int bounce)
 			}
 			if(ind==0){
 				colorM=vec4(1.0, 0.4, 0.4, 1.0);
-				kr=0.5;
 			}
 				
 			if(ind==1)
 			{
 				colorM=vec4(0.4, 0.4, 1.0, 1.0);
-				kr=0.5;
 			}
-			if(ind==2){
+			if(ind==2)
+			{
+				colorM=vec4(0.0, 0.4, 0.8, 1.0);
+			}
+			if(ind==3){
 				vec2 texCoords=vec2(position.x*0.15+0.15,position.z*0.1);
 				colorM=texture(tex_input,texCoords);
-				kr=0.5;
 				//colorM=vec4(0.4, 0.4, 1.0, 1.0);
 				//colorM=vec4(texCoords.x, texCoords.y, 0.0, 1.0);
 				

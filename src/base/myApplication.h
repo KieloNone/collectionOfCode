@@ -16,6 +16,8 @@ using namespace glm;
 #include "openGLstuff.h"
 
 #include "errorLogging.h"
+#include "raytracing/raytracing.h"
+#include "splines/splinesExample.h"
 //#include "windowWrapper.h"
 
 class myApplication {
@@ -32,6 +34,9 @@ class myApplication {
 		GLuint tex_output;
 		GLuint comp_shader;
 		GLuint texID;
+		simpleRaytracer raytracer_;
+		splinesExample splines_;
+
 		int tex_w; int tex_h;
 		float x,y,z;
 

@@ -27,7 +27,7 @@ template <class T>
 GLuint configure_array(std::vector<T> & data);
 
 GLuint load_texture();
-GLuint configure_texture2D(std::string filename, myimagetype type);
+GLuint configure_texture2D(const char * filename, myimagetype type, int width, int height);
 void update_texture2D(GLuint textureID, std::string filename, myimagetype type);
 
 GLuint createAndCompileShader(const char * file_path, GLuint type);

@@ -8,6 +8,8 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include src/base/splines/subdir.mk
+-include src/base/raytracing/subdir.mk
 -include src/base/subdir.mk
 -include subdir.mk
 -include objects.mk

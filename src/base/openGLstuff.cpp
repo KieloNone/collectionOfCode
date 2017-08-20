@@ -20,6 +20,7 @@ using namespace cimg_library;
 #include <assimp/cimport.h>
 #include <typeinfo>
 
+#include "SOIL/SOIL.h"
 using namespace std;
 
 /*
@@ -135,14 +136,16 @@ void openGLexample::draw(){
 
 
 //this could be done easier with SOIL, but just to know how it is done
-GLuint configure_texture2D(string filename, myimagetype type){
+GLuint configure_texture2D(const char* filename, myimagetype type,int width, int height){
 
 	//getting image data from ofImage
 
-	CImg<unsigned char> image(filename.c_str());
-	unsigned char * data=image;
-	int width = image.width();
-	int height = image.height();
+    unsigned char * data=SOIL_load_image(filename,&width, &height, 0, SOIL_LOAD_RGBA);
+
+    if (data == NULL) {
+        std::cout << "An error occurred while loading image." << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     GLuint textureID;
     //creating a texture pointer at address textureID
