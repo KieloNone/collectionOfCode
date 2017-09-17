@@ -16,6 +16,7 @@ void splinesExample::loadData(const char * filename){
 			initialPoints.push_back(vec3(a,b,0));
 
 		}
+		infile.close();
 		}else{
 			printf("Impossible to open %s.", filename);
 			getchar();

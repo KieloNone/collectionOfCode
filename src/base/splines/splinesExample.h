@@ -17,7 +17,7 @@ using namespace glm;
 
 #include <string>
 
-
+//2D-example, you can do much more with the splines than just this
 class splinesExample {
 public:
 	void loadData(const char * file_path);

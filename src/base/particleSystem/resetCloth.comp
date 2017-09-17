@@ -1,0 +1,29 @@
+#version 440
+layout(local_size_x = 1, local_size_y = 1) in;
+layout(rgba32f, binding = 1) uniform image3D cloth;
+
+void main(){
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	ivec3 dims = imageSize(cloth);
+	
+	int xi=pixel_coords.x;
+	int yi=pixel_coords.y;
+
+	float mass = 0.025;
+	float drag_k = 0.08;
+	float spring_k = 0.3;
+	float width = 1.0f, height = 1.0f; // width and height of the whole grid
+	float xstep = width/(dims.x-1.0f), ystep=height/(dims.y-1.0f), xstart=-width/2.0f; 
+	float rlen = sqrt(xstep*xstep + ystep*ystep);
+
+	vec4 position;
+
+	position=vec4(xstart + xi*xstep,0.9,1.0f*yi*ystep,1);
+		
+	imageStore(cloth, ivec3(pixel_coords,0), position);
+	imageStore(cloth, ivec3(pixel_coords,1), vec4(0));
+	imageStore(cloth, ivec3(pixel_coords,2), vec4(1));
+	
+	//--------------------structural springs ------------------------------------
+	
+}

@@ -1,7 +1,8 @@
 #pragma once
 
-//This file is part of my schoolwork at Aalto University course ME-C3100 Computer graphics
+//This file is part of my schoolwork
 //it has been modified to be able to use glm, GLEW etc.
+//there would also be splines in glm, so this class is not that necessary
 
 #include <GL/glew.h>
 

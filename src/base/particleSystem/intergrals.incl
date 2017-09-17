@@ -1,0 +1,25 @@
+vec3 eulerStep(vec3 x0, vec3 texCoords,float step,int type) {
+	vec3 f0 = evalF(x0,texCoords,type);
+	vec3 xmi=x0 + step*f0;
+	return xmi;
+
+}
+
+
+vec3 rk4Step(vec3 x0, vec3 texCoords,float step,int type) {
+	// EXTRA: Implement the RK4 Runge-Kutta integrator.
+	vec3 f0 = evalF(x0,texCoords,0,type);
+	
+	vec3 x1 = x0 + (0.5 * step) * f0;
+	vec3 f1 = evalF(x1,texCoords,(0.5 * step),type);
+	
+	vec3 x2 = x0 + (0.5 * step) * f1;
+	vec3 f2 = evalF(x2,texCoords,(0.5 * step),type);
+	
+	vec3 x3 = x0 + step * f2;
+	vec3 f3 = evalF(x3,texCoords,(0.5 * step),type);
+	
+	vec3 xout = x0 +step*1.0f/6.0f*(f0+2.0*f1+2.0*f2+f3);
+	
+	return xout;
+}

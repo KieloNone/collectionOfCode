@@ -1,5 +1,5 @@
 #pragma once
-// Include GLEW. Always include it before gl.h and glfw.h, since it's a bit magic.
+// Include GLEW.
 #include <GL/glew.h>
 
 #define GLFW_STATIC
@@ -15,7 +15,6 @@ using namespace glm;
 #include "../openGLstuff.h"
 
 
-//#include "windowWrapper.h"
 
 class simpleRaytracer {
 	public:

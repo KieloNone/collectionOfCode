@@ -81,7 +81,7 @@ int windowWrapper::init(int width,int height){
 	//full screen
 	//window = glfwCreateWindow(vmode->width, vmode->height, "Extended GL Init", mon, NULL);
 	if( window_ == NULL ){
-		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
+		fprintf( stderr, "Failed to open GLFW window.\n" );
 		glfwTerminate();
 		return -1;
 	}

@@ -16,7 +16,7 @@ uniform int type[4];
 float intersectSphere(vec3 ray_o, vec3 ray_d){
 	vec3 omc = ray_o - vec3(0,0,0);
 	float b = dot(ray_d, omc);
-	float c = dot(omc, omc) - 1;
+	float c = dot(omc, omc) - 1; //the radius of the sphere is 1
 	//float a = dot(ray_d,ray_d); //unnecessary if ray direction is normalized
 	float a=1; //change if needed
 	float bsqmc = b * b - c; //truly 4b²-4ac
@@ -226,7 +226,7 @@ void main() {
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
   
 	//----------------procjection + view + light (hardcoded for now)--------------------
-	float max_x = 5.0;
+	float max_x = 5.0*1.75;
 	float max_y = 5.0;
 	ivec2 dims = imageSize(img_output); // fetch image dimensions
 	float x = (float(pixel_coords.x * 2 - dims.x) / dims.x); //--->[-1,1]

@@ -1,0 +1,231 @@
+#version 440
+layout(local_size_x = 4, local_size_y = 4) in;
+//using image2D instead of sampler, we can write anywhere in the image?
+layout(rgba32f, binding = 0) uniform image3D pos_velocity;
+
+uniform sampler3D previous_pass;
+uniform float time;
+
+//note the include below evalF
+
+vec3 fGravity(float mass) {
+	return vec3(0, -9.8f * mass, 0);
+}
+
+// force acting on particle at pos1 due to spring attached to pos2 at the other end
+vec3 fSpring(const vec3 pos1, vec3 pos2, float k, float rest_length) {
+	vec3 d;
+	vec3 force=vec3(0);
+	d = pos1 - pos2;
+	float dl = sqrt(d.x*d.x+d.y*d.y+d.z*d.z);
+	
+	float a=-k*(dl - rest_length);
+	
+	//if(abs(dl)>0.00001 && (abs(a)>0.0001))
+		force = a*normalize(d);
+	return force;
+}
+
+
+vec3 fDrag(vec3 v, float k) {
+	vec3 drag;
+	drag = -k*v;
+	return drag;
+	
+}
+
+//sampler3D is mapped from 0 to 1 instead of from 0 to imageSize
+vec3 increment(vec3 textureCoords, vec3 amount){
+	vec3 dims = imageSize(pos_velocity);
+	vec3 incOut=textureCoords+vec3(amount.x/(float(dims.x)-1),amount.y/(float(dims.y)-1),amount.z/(float(dims.z)-1));
+	return incOut;
+}
+
+vec3 getX(vec3 textureCoords, vec3 amount, float step){
+	vec3 xOut=vec3(0);
+	vec3 coords=increment(textureCoords,amount);
+	vec3 xi=texture(previous_pass,coords).xyz;
+	vec3 vi=texture(previous_pass,vec3(coords.xy,0.5)).xyz;
+	xOut=xi+step*vi;
+	return xi;
+}
+
+bool isInsideSphere(vec3 point){
+	
+	vec3 sphere_origin=vec3(0,0,0.27);
+	float r=0.3;
+	
+	vec3 d = point - sphere_origin;
+	float dl = d.x*d.x+d.y*d.y+d.z*d.z;
+	if(dl<r*r)
+		return true;
+	else
+		return false;
+}
+
+//evaluate Force
+vec3 evalF(vec3 v0, vec3 texCoords,float step,int type){
+	
+	vec3 dims = imageSize(pos_velocity);
+	//initializing here, if springs are different, it might be better to initialize to texture
+	float mass = 0.025;
+	float drag_k = 0.06;
+	float spring_k = 300.0;
+	float fspring_k = 50.0;
+	
+	float width = 1.0f, height = 1.0f; // width and height of the whole grid
+	float xstep = width/(dims.x-1.0f), ystep=height/(dims.y-1.0f); 
+	float rlen = sqrt(xstep*xstep + ystep*ystep);
+	
+	vec3 f_out = vec3(0);
+	if(type==0)
+		f_out = texture(previous_pass, texCoords).xyz;  //the position is just velocity times step
+	else{
+		
+		
+		f_out=fGravity(mass)+fDrag(v0,drag_k); 
+		
+		vec3 x0=texture(previous_pass,texCoords).xyz;
+		
+		//structural springs
+		if(texCoords.y>0){
+			vec3 x1=getX(texCoords, vec3(0,-1,0), step);
+			f_out+=fSpring(x0, x1, spring_k, ystep);
+					
+		}
+		
+		if(texCoords.y<1){
+			vec3 x1=getX(texCoords, vec3(0,1,0), step);
+			f_out+=fSpring(x0, x1, spring_k, ystep);
+		}
+		
+		
+		if(texCoords.x>0){
+			vec3 x1=getX(texCoords, vec3(-1,0,0), step);
+			f_out+=fSpring(x0, x1, spring_k, xstep);
+					
+		}
+		
+		
+		if(texCoords.x<1){
+			vec3 x1=getX(texCoords, vec3(1,0,0), step);
+			f_out+=fSpring(x0, x1, spring_k, xstep);
+		}
+		
+		//shear springs
+		
+		if((texCoords.y>0) && (texCoords.x>0)){
+			vec3 x1=getX(texCoords, vec3(-1,-1,0), step);
+			f_out+=fSpring(x0, x1, fspring_k, rlen);
+					
+		}
+		
+		if((texCoords.y>0) && (texCoords.x<1)){
+			vec3 x1=getX(texCoords, vec3(1,-1,0), step);
+			f_out+=fSpring(x0, x1, fspring_k, rlen);
+					
+		}
+		
+		
+		if((texCoords.y<1) && (texCoords.x>0)){
+			vec3 x1=getX(texCoords, vec3(-1,1,0), step);
+			f_out+=fSpring(x0, x1, fspring_k, rlen);
+		}
+		
+		if((texCoords.y<1) && (texCoords.x<1)){
+			vec3 x1=getX(texCoords, vec3(1,1,0), step);
+			f_out+=fSpring(x0, x1, fspring_k, rlen);
+		}
+		
+		//flex springs
+		vec2 stepi= vec2(1.0/(dims.x-1.0),1.0/(dims.y-1.0));
+		if(texCoords.y>stepi.y){
+			vec3 x1=getX(texCoords, vec3(0,-2,0), step);
+			f_out+=fSpring(x0, x1, fspring_k, 2*ystep);
+							
+		}
+				
+		if(texCoords.y<(1-stepi.y)){
+			vec3 x1=getX(texCoords, vec3(0,2,0), step);
+			f_out+=fSpring(x0, x1, fspring_k, 2*ystep);
+		}
+				
+				
+		if(texCoords.x>stepi.x){
+			vec3 x1=getX(texCoords, vec3(-2,0,0), step);
+			f_out+=fSpring(x0, x1, fspring_k, 2*xstep);
+					
+		}
+		
+		
+		if(texCoords.x<(1-stepi.x)){
+			vec3 x1=getX(texCoords, vec3(2,0,0), step);
+			f_out+=fSpring(x0, x1, fspring_k, 2*xstep);
+		}
+				
+		
+	
+		
+		
+		f_out *= 1.0f / mass;
+	}
+	return f_out;
+}
+
+vec3 evalF(vec3 v0, vec3 texCoords,int type){
+	return evalF(v0, texCoords,0,type);
+}
+
+// just a hack so that all the data does not need to be in the same file
+#includeO src/base/particleSystem/intergrals.incl
+
+void main(){
+
+	// get index in global work group i.e x,y position
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	  
+	ivec3 dims = imageSize(pos_velocity); // fetch image dimensions
+
+	
+	ivec3 texCoordsX=ivec3(pixel_coords,0);
+	ivec3 texCoordsV=ivec3(pixel_coords,1);
+	ivec3 texCoordsC=ivec3(pixel_coords,2);
+	
+	//I'm using sampler3D instead of image3D so I need to map to [0,1]
+	vec3 texCoordsXf=vec3(texCoordsX.xy/float(dims.xy-vec2(1.0)),0);
+	vec3 texCoordsVf=vec3(texCoordsV.xy/float(dims.xy-vec2(1.0)),0.5);
+	
+	vec4 x0=texture(previous_pass,texCoordsXf); 
+	vec3 v0=texture(previous_pass,texCoordsVf).xyz;
+	vec3 x1=vec3(0);
+	vec3 v1=vec3(0);
+	float step=0.00003;
+	float temps=0.00003;
+	float changetime=2*temps/step;
+	
+	//integration
+	if((time < changetime) &&( ((pixel_coords.x==0) && (pixel_coords.y==0))||((pixel_coords.y==0) && (pixel_coords.x==(dims.x-1))))) {
+		x1=x0.xyz;
+		v1=v0;
+		
+	}else{
+		//x1=eulerStep(x0.xyz, texCoordsVf,step,0);//rk4Step(x0.xyz, texCoordsVf,step,0);
+		//v1=eulerStep(v0, texCoordsXf,step,1);//rk4Step(v0, texCoordsXf,step,1);
+		x1=rk4Step(x0.xyz, texCoordsVf,step,0);
+		v1=rk4Step(v0, texCoordsXf,step,1);
+	}
+	
+	if((time>changetime) && (time<changetime*3)){
+		if(isInsideSphere(x1)){
+			x1=x0.xyz;
+			v1=vec3(0,0,0);
+		}
+	}
+	
+	
+		
+		
+	imageStore(pos_velocity, texCoordsX, vec4(x1,x0.w));
+	imageStore(pos_velocity, texCoordsV, vec4(v1,0));
+
+}

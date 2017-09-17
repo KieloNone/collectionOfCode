@@ -26,4 +26,5 @@ SUBDIRS := \
 src/base \
 src/base/splines \
 src/base/raytracing \
+src/base/particleSystem \
 

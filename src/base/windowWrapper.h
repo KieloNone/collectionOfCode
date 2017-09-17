@@ -1,5 +1,6 @@
 #pragma once
 
+
 // Include GLEW. Always include it before gl.h and glfw.h, since it's a bit magic.
 #include <GL/glew.h>
 

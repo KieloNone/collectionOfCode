@@ -7,7 +7,7 @@ void simpleRaytracer::setup(float &x, float & y, float&z){
 
 
 
-	//----------------------------------------
+	//----------------------loading texture and updating it to GPU------------------
 
 	int width=512;int height=512;
 	unsigned char * data=SOIL_load_image("src/base/raytracing/testi.png",&width, &height, 0, SOIL_LOAD_RGBA);
@@ -27,21 +27,11 @@ void simpleRaytracer::setup(float &x, float & y, float&z){
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //linear interpolation when zooming out
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //mipmaps when zooming in
-    //glGenerateMipmap(GL_TEXTURE_2D);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    /*
-    int test;
-    //glGetTexParameter(GL_TEXTURE_2D, GL_IMAGE_FORMAT_COMPATIBILITY_BY_SIZE, &test); //arch... I can do this with a sampler, but not with a imageLoad apparently...
-    std::cout << test<<std::endl;
-    */
 	glBindTexture(GL_TEXTURE_2D,0);
-	//glBindImageTexture(1, texID, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
 	SOIL_free_image_data(data);
 	//-----------------------creating texture for compute shader-----------------
@@ -50,6 +40,7 @@ void simpleRaytracer::setup(float &x, float & y, float&z){
 	x=-2;y=0;z=-8;
 	//dimensions of the image
 	tex_w_ = 512, tex_h_ = 512;
+
 	glGenTextures(1, &tex_output_);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex_output_);

@@ -1,0 +1,50 @@
+#version 440
+layout(local_size_x = 4, local_size_y = 4) in;
+layout(rgba32f, binding = 0) uniform image3D this_pass;
+
+uniform sampler3D previous_pass;
+
+vec3 increment(vec3 textureCoords, vec3 amount){
+	vec3 dims = imageSize(this_pass);
+	vec3 incOut=textureCoords+vec3(amount.x/(float(dims.x)-1),amount.y/(float(dims.y)-1),amount.z/(float(dims.z)-1));
+	return incOut;
+}
+
+void main(){
+	// base pixel colour for image
+	vec4 pixel = vec4(0.0, 0.0, 0.0, 0.0);
+	// get index in global work group i.e x,y position
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	  
+	//----------------procjection + view + light (hardcoded for now)--------------------
+	ivec3 dims = imageSize(this_pass); // fetch image dimensions
+
+	
+	ivec3 texCoordsX=ivec3(pixel_coords,0);
+	ivec3 texCoordsV=ivec3(pixel_coords,1);
+	ivec3 texCoordsC=ivec3(pixel_coords,2);
+	
+	vec3 texCoordsXf=vec3(texCoordsX.xy/float(dims.xy),0);
+	vec3 texCoordsVf=vec3(texCoordsV.xy/float(dims.xy),0.5);
+	vec3 texCoordsCf=vec3(texCoordsC.xy/float(dims.xy),1);
+	
+	//moving vertices from texture to other
+	imageStore(this_pass, texCoordsX, texture(previous_pass,texCoordsXf));
+	imageStore(this_pass, texCoordsV, texture(previous_pass,texCoordsVf));
+	
+	
+	//normals
+	
+	//clamped to edge so no if needed
+	vec3 x0=texture(previous_pass,increment(texCoordsXf,vec3(-1,0,0))).xyz; 
+	vec3 x1=texture(previous_pass,increment(texCoordsXf,vec3(1,0,0))).xyz;
+	
+	vec3 y0=texture(previous_pass,increment(texCoordsXf,vec3(0,-1,0))).xyz; 
+	vec3 y1=texture(previous_pass,increment(texCoordsXf,vec3(0,1,0))).xyz;
+	
+	vec3 x=x1-x0;
+	vec3 y=y1-y0;
+	vec3 normal=normalize(cross(x,y));
+	
+	imageStore(this_pass, texCoordsC, vec4(normal,0));
+}

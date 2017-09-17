@@ -36,7 +36,7 @@ using namespace glm;
 
 int main(){
 
-	windowWrapper window;
+	windowWrapper window(840,480);
 	window.run();
 
 

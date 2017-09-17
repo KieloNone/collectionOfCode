@@ -1,11 +1,11 @@
 #include "splines.h"
-//#include "extra.h"
+//this is a copy of my schoolwork
+
 //#ifdef WIN32
 //#include <windows.h>
 //#endif
 //#include <GL/gl.h>
 using namespace std;
-//using namespace FW;
 
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -25,7 +25,7 @@ inline bool approx(float a, float b) {
 
 }
 
-//temporary
+//temporary. TODO: check if glm has these
 void setRow(mat4& matrix, int index, vec4 data){
 	assert(index >= 0 && index < 4);
 	for(int i = 0; i < 4; ++i)
@@ -42,7 +42,7 @@ void setColumn(mat4& matrix, int index, vec4 data){
 
 
 // This is the core routine of the curve evaluation code. Unlike
-// evalBezier, this is only designed to work on 4 control points.
+// evalBezier etc., this is only designed to work on 4 control points.
 // Furthermore, it requires you to specify an initial binormal
 // Binit, which is iteratively propagated throughout the curve as
 // the curvepoints are generated. Any other function that creates
@@ -194,7 +194,7 @@ Curve coreBezier(const vec3& p0,
 		R[i].T.z = p0.z*Bt[0] + p1.z*Bt[1] + p2.z*Bt[2] + p3.z*Bt[3];
 		R[i].T = normalize(R[i].T);
 
-		//recursive sheme for calculating binormals and tangents (see handout2 appendix)
+		//recursive scheme for calculating binormals and tangents
 		// as noted below we assume G1 continuity
 
 		if (i>0)
@@ -222,7 +222,7 @@ Curve coreBezier(const vec3& p0,
 			R[i].V.y = p0.y*Bt[0] + p1.y*Bt[1] + p2.y*Bt[2] + p3.y*Bt[3];
 			R[i].V.z = p0.z*Bt[0] + p1.z*Bt[1] + p2.z*Bt[2] + p3.z*Bt[3];
 
-			//recursive sheme for calculating binormals and tangents (see handout2 appendix)
+			//recursive scheme for calculating binormals and tangents
 			// as noted below we assume G1 continuity
 			if (i == 0)
 			{
@@ -274,7 +274,7 @@ Curve coreBezier(const vec3& p0,
 }
 
 // the P argument holds the control points and steps gives the amount of uniform tessellation.
-// the rest of the arguments are for the adaptive tessellation extra.
+// the rest of the arguments are for the adaptive tessellation.
 Curve evalBezier(const vector<vec3>& P, unsigned steps, bool adaptive, float errorbound, float minstep) {
     // Check
     if (P.size() < 4 || P.size() % 3 != 1) {
@@ -284,7 +284,6 @@ Curve evalBezier(const vector<vec3>& P, unsigned steps, bool adaptive, float err
 	}
 
 	size_t N = (P.size()-1)/3;
-	cerr << "N "<< N << endl;
 	Curve BezC, temp;
 	vec3 Binit = vec3(0.0, 0.0, 1.0);
 	for (size_t i = 0; i < N; i++)
@@ -298,33 +297,19 @@ Curve evalBezier(const vector<vec3>& P, unsigned steps, bool adaptive, float err
 		for (unsigned j = 0u; j < steps; j++)
 			BezC.push_back(temp[j]);
 
-		//cerr << "\t>>> "; printTranspose(P[i * 3]); cerr << endl;
-		//cerr << "\t>>> "; printTranspose(temp[0].V); cerr << endl;
-		//cerr << "\t>>> "; printTranspose(temp[steps].V); cerr << endl;
+
 
 	}
 	BezC.push_back(temp[steps]);
 	if (approx(BezC[0].V, BezC[BezC.size() - 1].V) && !approx(BezC[0].B, BezC[BezC.size() - 1].B))
 		quicFixNormals(BezC);
 
-	/*
-    cerr << "\t>>> evalBezier has been called with the following input:" << endl;
 
-    cerr << "\t>>> Control points (type vector<Vec3f>): "<< endl;
-    /*for (unsigned i = 0; i < P.size(); ++i) {
-        cerr << "\t>>> "; printTranspose(P[i]); cerr << endl;
-    }*/
-
-	/*
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning curve with following points." << endl;
-	cout << BezC.size() << endl;
-	*/
     return BezC;
 }
 
 // the P argument holds the control points and steps gives the amount of uniform tessellation.
-// the rest of the arguments are for the adaptive tessellation extra.
+// the rest of the arguments are for the adaptive tessellation.
 Curve evalBspline(const vector<vec3>& P, unsigned steps, bool adaptive, float errorbound, float minstep) {
     // Check
     if (P.size() < 4) {
@@ -332,8 +317,6 @@ Curve evalBspline(const vector<vec3>& P, unsigned steps, bool adaptive, float er
         exit(0);
     }
 
-    // YOUR CODE HERE (R2):
-    // EM: implementation of R2 via change of basis
 
 	mat4 Bbezier, Bspline, BB, G1, G2;
 	vec3 p0, p1, p2, p3,Binit;
@@ -351,15 +334,10 @@ Curve evalBspline(const vector<vec3>& P, unsigned steps, bool adaptive, float er
 	BB = inverse(Bspline*Bbezier);
 	Binit = vec3(0.0, 0.0, 1.0);
 
-	/*BB.setRow(0,           Vec4f(1.0/6.0, 0.0, 0.0, 0.0));
-	BB.setRow(1, 1.0f/6.0f*Vec4f(4.0, 4.0, 2.1, 1.0));
-	BB.setRow(2, 1.0f/6.0f*Vec4f(1.0, 2.0, 4.0, 4.0));
-	BB.setRow(3,           Vec4f(0.0, 0.0, 0.0, 1.0/6.0)); */
 	Curve R,temp;
 
 	for (unsigned i = 0; i < P.size() - 3; i++)
 	{
-		//cerr << "\t>>> "<< i << endl;
 		setColumn(G1,0, vec4( P[i][0],P[i][1],P[i][2], 0 ));
 		setColumn(G1,1, vec4( P[i+1][0],P[i+1][1],P[i+1][2], 0 ));
 		setColumn(G1,2, vec4( P[i + 2][0],P[i + 2][1],P[i + 2][2], 0 ));
@@ -379,7 +357,6 @@ Curve evalBspline(const vector<vec3>& P, unsigned steps, bool adaptive, float er
 		for (unsigned j = 0; j < temp.size() - 1; j++)
 		{
 			R.push_back(temp[j]);
-			//cerr << temp[j].V[0] << " " << temp[j].V[1] << " " << temp[j].V[2] << endl;
 		}
 
 
@@ -390,18 +367,6 @@ Curve evalBspline(const vector<vec3>& P, unsigned steps, bool adaptive, float er
 		quicFixNormals(R);
 
 
-	/*
-    cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
-
-    cerr << "\t>>> Control points (type vector< Vec3f >): "<< endl;
-    //for (unsigned i = 0; i < P.size(); ++i) {
-    //    cerr << "\t>>> "; printTranspose(P[i]); cerr << endl;
-    //}
-
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
-	*/
-    // Return an empty curve right now.
     return R;
 }
 

@@ -436,6 +436,119 @@ GLuint createAndCompileShader(const char * file_path, GLuint type){
 
 }
 
+GLuint createAndCompileShaderWithIncludes(const char * file_path, GLuint type){
+
+	//create shader
+	GLuint ShaderID = glCreateShader(type);
+
+	// Read the shader code from the file
+	string ShaderCode;
+	ifstream ShaderStream(file_path, std::ios::in);
+	std::string temp("#includeO");
+	if(ShaderStream.is_open()){
+		string Line = "";
+		while(getline(ShaderStream, Line)){
+
+			//checking for includes...
+			string substring=Line.substr(0,9);
+
+			if(substring.compare(temp)==0 ){
+				std::cout << substring << std::endl;
+				substring=Line.substr(10);
+				std::cout << substring << std::endl;
+				ifstream IncludeStream(substring, std::ios::in);
+					if(IncludeStream.is_open()){
+						while(getline(IncludeStream, Line)){
+							ShaderCode += "\n" + Line;
+						}
+						IncludeStream.close();
+					}else{
+						std::cout << "MY:Impossible to open include ." << substring << "."<<std::endl;//printf("MY:Impossible to open include %s.", substring);
+					}
+			}
+			else
+				ShaderCode += "\n" + Line;
+		}
+
+		ShaderStream.close();
+	}else{
+		printf("Impossible to open %s.", file_path);
+		getchar();
+		return 0;
+	}
+
+	// Compile  Shader
+	printf("Compiling shader : %s\n", file_path);
+	char const * ShaderSourcePointer = ShaderCode.c_str();
+	glShaderSource(ShaderID, 1, &ShaderSourcePointer , NULL);
+	glCompileShader(ShaderID);
+
+	// check whether or not the compilation was successful
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+
+	glGetShaderiv(ShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(ShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if ( InfoLogLength > 0 ){
+		if(type==GL_VERTEX_SHADER){
+			vector<char> VertexShaderErrorMessage(InfoLogLength+1);
+			glGetShaderInfoLog(ShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+			printf("%s\n", &VertexShaderErrorMessage[0]);
+		}
+		else{
+			vector<char> FragmentShaderErrorMessage(InfoLogLength+1);
+			glGetShaderInfoLog(ShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+			printf("%s\n", &FragmentShaderErrorMessage[0]);
+		}
+	}
+
+	return ShaderID;
+
+}
+
+GLuint loadCompShaderWithIncludes(const char * vertex_file_path){
+	GLuint shadeInt=createAndCompileShaderWithIncludes(vertex_file_path, GL_COMPUTE_SHADER);
+
+	GLuint shaderprogram = glCreateProgram();
+	glAttachShader(shaderprogram, shadeInt);
+	glLinkProgram(shaderprogram);
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+
+	glGetProgramiv(shaderprogram, GL_LINK_STATUS, &Result);
+	glGetProgramiv(shaderprogram, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if ( InfoLogLength > 0 ){
+		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
+		glGetProgramInfoLog(shaderprogram, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		printf("%s\n", &ProgramErrorMessage[0]);
+	}
+
+	glDetachShader(shaderprogram, shadeInt);
+	glDeleteShader(shadeInt);
+	return shaderprogram;
+}
+
+GLuint loadCompShader(const char * vertex_file_path){
+	GLuint shadeInt=createAndCompileShader(vertex_file_path, GL_COMPUTE_SHADER);
+
+	GLuint shaderprogram = glCreateProgram();
+	glAttachShader(shaderprogram, shadeInt);
+	glLinkProgram(shaderprogram);
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+
+	glGetProgramiv(shaderprogram, GL_LINK_STATUS, &Result);
+	glGetProgramiv(shaderprogram, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if ( InfoLogLength > 0 ){
+		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
+		glGetProgramInfoLog(shaderprogram, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		printf("%s\n", &ProgramErrorMessage[0]);
+	}
+
+	glDetachShader(shaderprogram, shadeInt);
+	glDeleteShader(shadeInt);
+	return shaderprogram;
+}
 
 GLuint loadShaders(const char * vertex_file_path,const char * fragment_file_path){
 

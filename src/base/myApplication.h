@@ -18,6 +18,7 @@ using namespace glm;
 #include "errorLogging.h"
 #include "raytracing/raytracing.h"
 #include "splines/splinesExample.h"
+#include "particleSystem/particleSystem.h"
 //#include "windowWrapper.h"
 
 class myApplication {
@@ -36,8 +37,10 @@ class myApplication {
 		GLuint texID;
 		simpleRaytracer raytracer_;
 		splinesExample splines_;
+		particleSystem cloth_;
 
 		int tex_w; int tex_h;
 		float x,y,z;
+		float timer_;
 
 };

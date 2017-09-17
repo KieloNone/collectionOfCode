@@ -30,6 +30,35 @@ void canvas(GLuint& vbo, GLuint& vao, GLuint& shaderprogram){
 	shaderprogram=loadShaders("bin/shaders/canvas.vert","bin/shaders/canvas.frag");
 
 }
+
+
+void canvas3D(GLuint& vbo, GLuint& vao, GLuint& shaderprogram){
+
+	//could be done with 4 points... hmm...
+	float points[] = {
+			-1.0f,  1.0f,  0.0f,
+			-1.0f, -1.0f,  0.0f,
+			 1.0f, -1.0f,  0.0f,
+			-1.0f,  1.0f,  0.0f,
+			 1.0f, -1.0f,  0.0f,
+			 1.0f,  1.0f,  0.0f,
+	};
+
+	vbo = 0;
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(float), points, GL_STATIC_DRAW);
+	vao = 0;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(0);
+
+	shaderprogram=loadShaders("bin/shaders/canvas.vert","bin/shaders/canvas3D.frag");
+
+}
 //plain triangle
 void setup1(GLuint& vbo, GLuint & vao, GLuint & colours_vbo, GLuint & shaders){
 	//if there is not a possibility to see the back of the triangle, don't render it
@@ -118,15 +147,25 @@ void myApplication::getKeyUpdates(GLFWwindow* window){
 void myApplication::setup(){
 	//setup1(vbo, vao, colours_vbo, shaders);
 
+
+	//raytracer:
 	//canvas(vbo, vao, shaders);
 	//raytracer_.setup(x,y,z);
-	splines_.setup();
 
+	//splines:
+	//splines_.setup();
+
+	//cloth:
+	canvas3D(vbo, vao, shaders);
+	cloth_.setup();
 
 }
 
 void myApplication::update(){
-	//update1(shaders, vao);
+
+	//raytracer:
+
+
 
 	/*
 	GLuint tex_output=raytracer_.update(x,y,z);
@@ -141,9 +180,15 @@ void myApplication::update(){
 	    glBindTexture(GL_TEXTURE_2D, tex_output);
 	    glDrawArrays(GL_TRIANGLES, 0, 18);
 	}
-	*/
 
-	splines_.draw();
+	*/
+	//splines:
+	//splines_.draw();
+
+	//cloth
+
+	cloth_.update();
+
 }
 
 
